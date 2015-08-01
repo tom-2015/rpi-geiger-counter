@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="javascripts/jquery/jquery.js"></script>
+    <script type="text/javascript" src="javascripts/flot/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="javascripts/flot/jquery.flot.resize.min.js"></script>
+    <style>
+        .chart {
+        	box-sizing: border-box;
+        	-moz-box-sizing:border-box; /* Firefox */
+        	width: 100%;
+        	height: 500px;
+        	padding: 20px 15px 15px 15px;
+        	margin: 15px auto 30px auto;
+        	border: 1px solid #ddd;
+        	background: #ffffff;
+        	background: linear-gradient(#f6f6f6 0, #ffffff 50px);
+        	background: -o-linear-gradient(#f6f6f6 0, #ffffff 50px);
+        	background: -ms-linear-gradient(#f6f6f6 0, #ffffff 50px);
+        	background: -moz-linear-gradient(#f6f6f6 0, #ffffff 50px);
+        	background: -webkit-linear-gradient(#f6f6f6 0, #ffffff 50px);
+        	box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        	-o-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        	-ms-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        	-moz-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        	-webkit-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+    <title>Geiger Counter</title>
+</head>
+<body>
+    <table width="80%" align="center">
+    <tr><td colspan="2" valign="top" align="center"><h1>Radio acitivity monitor</h1></td></tr>
+    <tr><td colspan="2"></td></tr>
+    <tr><td>
+        <table width="100%">
+            <tr>
+                <td width="25%" valign="top">
+                        <h2>System status</h2>
+                        <div id="div_status">
+                            Loading status
+                        </div>
+                </td>
+                <td rowspan="2">
+                    <div class="chart" id="chart">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td valign="bottom"><div id="div_system"></div></td>
+            </tr>
+            <tr height="10%">
+                <td colspan="2">
+                    <div id="div_error_log" style="height:80px;overflow-y:scroll;">
+                    </div>
+                </td>
+            </tr>
+        </table>          
+<script type="text/javascript">
+//automatically update the status html
+setTimeout(load_status, 1000);
+function load_status(){
+    $.getJSON( "json?t="+Math.random(), function( data ) {
+                                    var html = "<table><tr><td>Hits</td><td>"+data.counter+"</td></tr>"+
+                                                "<tr><td>Time counting</td><td>"+data.time_counting+"</td></tr>"+
+                                                "<tr><td>Threshold</td><td>"+Math.round(data.threshold * 2 / 3)+"&#181;s</td></tr>"+
+                                                "<tr><td>Last pulse</td><td>"+(data.time_on-data.last_pulse_time)+" seconds ago.</td></tr>"+
+                                                "<tr><td>Duty cycle</td><td>"+(Math.round(data.duty_cycle/(data.max_duty_cycle+1)*1000.0)/10.0)+"%</td></tr>"+
+                                                "<tr><td>Voltage</td><td>"+(Math.round(data.adc_value * 4096.0 / 1024.0 / 1000.0 / 4700.0 * 1004700.0 * data.adc_calibration / 1000000.0))+"V</td></tr>"+
+                                                "</table>";
+                                    $('#div_status').html(html);
+                                    var upload_date = new Date(data.extensions.httpclient.last_upload_ok*1000);
+                                    html = "<table><tr><td>Http client</td><td>"+(data.extensions.httpclient.enabled==1 ? "on" : "off")+"</td></tr>"+
+                                           "<tr><td>Last http upload</td><td>"+upload_date.getFullYear()+'-'+(upload_date.getMonth()+1)+'-'+upload_date.getDate()+' '+upload_date.getHours()+':'+upload_date.getMinutes()+':'+upload_date.getSeconds()+"</td></tr>"+
+                                           "<tr><td>Last http response</td><td>"+data.extensions.httpclient.last_response_code+"</td></tr>"+
+                                           "</table>";
+                                    $('#div_system').html(html);
+                                }).fail(function (){
+                                    $('#div_status').html('<font color="#FF0000">Connection Error!</font>');
+                                });
+    setTimeout(load_status, 1000);
+}
+
+//update error log
+setTimeout(get_error_log, 2000);
+function get_error_log(){
+    $.get( "log.txt?t="+Math.random(), function( data ) {
+                                    var html = data.replace(/(?:\r\n|\r|\n)/g, "<br/>");
+                                    $('#div_error_log').html(html);
+                                    $('#div_error_log').scrollTop($('#div_error_log').prop("scrollHeight"));
+                                });
+    setTimeout(get_error_log, 120000);
+}
+
+
+
+//chart
+$(function() {
+ 
+
+	var options = {
+		lines: {
+			show: true
+		},
+		points: {
+			show: true
+		},
+        grid: {
+			hoverable: true
+	    },
+		xaxis: {
+			tickDecimals: 0,
+			//tickSize: 1,
+            ticks: {}
+		},
+        legend: {
+            show: true,
+            position: "nw"
+            //margin: number of pixels or [x margin, y margin]
+            //backgroundColor: null or color
+            //backgroundOpacity: number between 0 and 1
+            //container: null or jQuery object/DOM element/jQuery expression
+        }
+
+	};
+
+    update_chart();
+    function update_chart(){
+        $.getJSON("chart.json?r="+Math.random(), function (data){
+            //plot.setData(data.charts[0].data); 
+            //plot.setupGrid();
+            //plot.draw();  
+            options.xaxis.ticks = data.xlabels;
+            $.plot("#chart", data.charts, options); //[{ "label":"#hits","data":data.charts[0].data}]
+        });
+        setTimeout(update_chart, 60000);
+    }
+
+
+	/*var previousPoint = null;
+	$("#chart").bind("plothover", function (event, pos, item) {
+		if (item) {
+			if (previousPoint != item.dataIndex) {
+				previousPoint = item.dataIndex;
+                var time = new Date(chart_dates[item.seriesIndex][item.dataIndex]*1000);
+                var time_text = '';
+                switch ({ $cmb_interval}){
+                    case 0: //hour
+                        time_text = (parseInt(chart_dates[item.seriesIndex][item.dataIndex] / 3600)) % 24 + "h"; //
+                        break;
+                    case 1: //day
+                        time_text =  $.datepicker.formatDate("dd-m-y", time);
+                        break;
+                    case 2: //month
+                        time_text = $.datepicker.formatDate("m-y", time);
+                        break;
+                    case 3: //year
+                        time_text = $.datepicker.formatDate("yy", time);
+                        break;
+                }
+
+				//var x = item.datapoint[0].toFixed(2);
+				var y = item.datapoint[1].toFixed(2);
+                var posx = item.pageX - $(element("chart")).offset().left;
+                var posy = item.pageY - $(element("chart")).offset().top;
+                var tooltip = $("#chart").tooltip({ position: { my: "left+"+posx+" top+"+posy, at: "left top", of: "#chart"}, items: "#chart", content: y + " KWh<br/>"+time_text});
+                var tooltip = $("#chart").tooltip("open");
+			}
+		} else if (previousPoint!=null) {
+		    $("#chart").tooltip("destroy");
+			previousPoint = null;            
+		}
+	});*/
+
+});
+
+
+
+</script>
+</body>
+</html>
