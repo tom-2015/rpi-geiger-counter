@@ -16,7 +16,7 @@ Installation:
    sudo apt-get install curl libcurl4-openssl-dev libmysqlclient-dev libudev-dev make
 
 3. Now you can clone and compile the code:
-   git clone 
+   git clone https://github.com/tom-2015/rpi-geiger-counter.git
    cd rpi-geiger-counter
    make
    
