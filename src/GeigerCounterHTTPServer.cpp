@@ -135,7 +135,7 @@ void HTTPServerExtension::http_event (http_server * server, http_server_event * 
 			content << "{\"xlabels\":[";
 			for (int i=0;i<measured_data_list.size();i++){
 				time_t sample_time = measured_data_list[i].end_time;
-				if ((i%4)==0 || i==measured_data_list.size()){
+				if ((i%4)==0 || i==measured_data_list.size()-1){
 					if (i!=0) content << ",";
 					struct tm * localsampletime = localtime(&sample_time);
 					content << "[" << ((sample_time-first_sample_time) / 60) << ", \"" << localsampletime->tm_hour << ":" << localsampletime->tm_min << "\"]";
