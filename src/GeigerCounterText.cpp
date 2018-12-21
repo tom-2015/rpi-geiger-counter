@@ -3,7 +3,8 @@
 #include <ostream>
 #include <fstream>
 #include <sstream>
-#include <stdlib.h> 
+#include <stdlib.h>
+#include <unistd.h>
 #include "log.h"
 #include "functions.h"
 

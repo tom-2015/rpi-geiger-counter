@@ -1,5 +1,6 @@
 #include "GeigerCounterMYSQL.h"
 #include <mysql/mysql.h>
+#include <unistd.h>
 #include <pthread.h>
 #include "log.h"
 #include "functions.h"

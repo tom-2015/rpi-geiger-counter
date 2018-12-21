@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <ctype.h>
+#include <unistd.h>
 #include "PracticalSocket.h"
 
 using namespace std;

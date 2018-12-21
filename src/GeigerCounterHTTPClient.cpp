@@ -1,5 +1,6 @@
 #include "GeigerCounterHTTPClient.h"
 #include "httprequest.h"
+#include <unistd.h>
 #include <time.h>
 #include <sstream>
 #include "log.h"

@@ -13,7 +13,7 @@ Installation:
 
 2. Install some required libs and programs:
    sudo apt-get update
-   sudo apt-get install curl libcurl4-openssl-dev libmysqlclient-dev libudev-dev make
+   sudo apt-get install curl libcurl4-openssl-dev libmysqlclient-dev libudev-dev make libusb-dev
 
 3. Now you can clone and compile the code:
    git clone https://github.com/tom-2015/rpi-geiger-counter.git
