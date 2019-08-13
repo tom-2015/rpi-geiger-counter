@@ -15,7 +15,9 @@ class HTTPClient: public GeigerCounterExtension {
 	int public_port; //public access port for /json
 	time_t last_upload_time;
 	int last_http_response_code;
-	
+
+
+	bool compress;
 	bool http_upload_enabled;
 	bool enabled;
 	bool keep_uploading;

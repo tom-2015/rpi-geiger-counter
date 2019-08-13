@@ -9,6 +9,7 @@
 #include "tinyxml2.h"
 #include "md5.h"
 #include "functions.h"
+#include "zlib.h"
 using namespace std;
 using namespace tinyxml2;
 
@@ -83,6 +84,8 @@ void HTTPClient::read_setting (const std::string & key, const std::string & valu
 		counter_id = value;
 	}else if (key.compare("http_public_access_port")==0){
 		public_port = (int) strtol(value.c_str(), NULL, 10);
+	}else if (key.compare("http_compress") == 0) {
+		compress = ((int)strtol(value.c_str(), NULL, 10)) > 0;
 	}
 }
 
@@ -124,8 +127,10 @@ void HTTPClient::upload(){
 		int count = 0;
 		time_t upload_time = time(0);
 		ostringstream data;
+		bool zlib_init_failed = false;
+		unsigned char * zlib_out = NULL;
 
-		data << "<?xml version=\"1.0\" encoding=\"utf-8\"?><request>";
+		data << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<request>";
 		data << "<meter id=\"" << counter_id << "\" version=\"" << APP_VERSION << "\" token=\"" << upload_time << "\" password=\"" << get_counter_password_md5(upload_time, counter_password) << "\">";
 
 		//save all the counter packets
@@ -161,15 +166,15 @@ void HTTPClient::upload(){
 		data << "</meter></request>";
 
 		//if packets received, upload the data using http request
-		if (count > 0){
+		if (count > 0) {
 			string post_data = data.str();
 			request.reset();
 			request.set_request_type(HTTPRequestPost);
 
 			if (proxy_server_port.length() > 0) request.set_proxy_server(proxy_server_port.c_str());
-			if (proxy_username_password.length()>0) request.set_proxy_server_user_name_pwd(proxy_username_password.c_str());
+			if (proxy_username_password.length() > 0) request.set_proxy_server_user_name_pwd(proxy_username_password.c_str());
 
-			if (username.length() > 0 && password.length() > 0){ //support for http authentication
+			if (username.length() > 0 && password.length() > 0) { //support for http authentication
 				request.set_http_authentication(HTTPAuthenticateAny);
 				request.set_http_password(password.c_str());
 				request.set_http_user_name(username.c_str());
@@ -178,8 +183,45 @@ void HTTPClient::upload(){
 			request.set_https_no_host_verification();
 			request.set_https_no_peer_verification();
 
-			request.add_form_parameter("data", post_data.c_str(), post_data.length());
-			if (request.send (posturl.c_str(), false)){
+			if (compress) {
+				request.set_http_header("Content-Encoding: gzip");
+				z_stream strm;
+				
+				/* allocate deflate state */
+				strm.zalloc = Z_NULL;
+				strm.zfree = Z_NULL;
+				strm.opaque = Z_NULL;
+
+				if (deflateInit(&strm, Z_DEFAULT_COMPRESSION) == Z_OK) {
+					zlib_out = new unsigned char [post_data.length()];
+					strm.avail_in = post_data.length();
+					strm.next_in = (unsigned char *) post_data.c_str();
+
+					strm.avail_out = post_data.length();
+					strm.next_out = zlib_out;
+
+					if (deflate(&strm, Z_FINISH) != Z_STREAM_ERROR) {    /* no bad return value */
+						/*ofstream myFile; for debugging you can write the gz data to a file...
+						myFile.open("/dev/shm/zlib_data.bin", ios::out | ios::binary);
+						myFile.write((const char *) zlib_out, post_data.length() - strm.avail_out);
+						myFile.close();*/
+						request.add_form_parameter("data", zlib_out, post_data.length() - strm.avail_out);
+					} else {
+						LOG_ERROR("Failed compress http form data, turn of compression!");
+					}
+
+				}else{
+					zlib_init_failed = true;
+					LOG_ERROR("Failed to init zlib, turn of compression!");
+				}
+				deflateEnd(&strm);
+			}
+			else
+			{
+				request.add_form_parameter("data", post_data.c_str(), post_data.length());
+			}
+			
+			if (request.send (posturl.c_str(), false) && !zlib_init_failed){
 				last_http_response_code = request.http_response_code();
 				if (request.http_response_ok()){ //check response code (200 OK)
 					XMLDocument * doc = request.response_xml(); //get the response as XML document
@@ -212,6 +254,8 @@ void HTTPClient::upload(){
 				LOG_ERROR ("cURL error:\n" << request.curl_error());
 			}
 		}
+
+		if (zlib_out != NULL) delete zlib_out;
 
 		int count_down = interval; //wait for next to be uploaded
 		while (count_down > 0 && keep_uploading){

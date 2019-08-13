@@ -36,6 +36,8 @@ class HTTPRequest {
 	int still_running;
 	CURLcode curl_result;
 
+	struct curl_slist * headers = NULL;
+
 	#ifdef HTTPRequestEnableXML
 		tinyxml2::XMLDocument * xml_doc;
 	#endif
@@ -59,6 +61,7 @@ public:
 	void set_http_authentication(HTTPAuthenticationConstants auth);
 	void set_https_no_host_verification();
 	void set_https_no_peer_verification();
+	void set_http_header(const char * header_value);
 
 	void set_request_type(HTTPRequestMethods reqmethod);
 

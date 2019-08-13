@@ -1,6 +1,6 @@
 APPNAME=geiger.elf
 INCL=-I/usr/include -I/usr/lib/arm-linux-gnueabihf
-LINK=-L/usr/lib -L/usr/local/lib -ludev -lpthread -lmysqlclient -lcurl
+LINK=-L/usr/lib -L/usr/local/lib -ludev -lpthread -lmysqlclient -lcurl -lz
 CXX=g++ 
 CXXFLAGS = -pthread -DAPP_VERSION="3.0" $(INCL)
 

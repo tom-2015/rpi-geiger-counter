@@ -133,6 +133,7 @@ bool HTTPRequest::send (const char * url, bool async){ //downloads the url
 			curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost); //pass the form parameter
 			break;
 	}
+	if (headers != NULL && curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers) != CURLE_OK) return false;
 	if (curl_easy_setopt(curl, CURLOPT_URL, url)!=CURLE_OK) return false;// what URL that receives this POST 
 	if (headerlist!=NULL && curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist)!=CURLE_OK) return false;
 	if (curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HTTPRequest::write_http_data)!=CURLE_OK) return false; //set the write function that receives the data
@@ -196,6 +197,10 @@ int HTTPRequest::http_response_code(){
 	long http_code = 0;
 	curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 	return (int)http_code;
+}
+
+void HTTPRequest::set_http_header(const char * header_value) {
+	headers = curl_slist_append(headers, header_value);
 }
 
 CURLcode HTTPRequest::curl_response_code(){
