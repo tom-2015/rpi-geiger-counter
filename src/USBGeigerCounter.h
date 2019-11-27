@@ -5,6 +5,12 @@
 
 #include "hid.h"
 #include <ctime>
+
+#define RAD_SENSETIVITY 11 //cps / (mR/h) 1 mR/h = 10µSv/h @ working voltage the counts per second with radiation of 1 m rontgen per hour
+#define RAD_WORKING_VOLTAGE 400 //in datasheet nominal working voltage
+#define RAD_PLATEAU_SLOPE 15 // % per 100V
+
+
 typedef enum {
 	USB_DATA=68,
 	USB_CMD=79
@@ -44,6 +50,7 @@ public:
 	HID_ERROR_MESSAGES connect(); //connects to the device, returns HID_ERROR_MESSAGES
 	void disconnect(); //disconnects
 
+	float cpm2rad(float cpm, float volt); //converts counts per min to µSv/h
 	bool read_packet(USBGeigerCounterPacket * packet); //read a packet which will be stored in packet
 	bool poll(); //sends poll command
 	bool reset_counter(); //resets the counter value

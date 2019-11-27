@@ -58,7 +58,8 @@ void HTTPRequest::add_form_parameter(const char * name, const char * value){
 }
 
 void HTTPRequest::add_form_parameter(const char * name, const void * data, size_t length){
-	curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, name, CURLFORM_PTRCONTENTS, data,CURLFORM_BUFFERLENGTH, (long) length, CURLFORM_END);
+	//curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, name, CURLFORM_PTRCONTENTS, data,CURLFORM_BUFFERLENGTH, (long) length, CURLFORM_END);
+	curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, name, CURLFORM_PTRCONTENTS, data, CURLFORM_CONTENTSLENGTH, (long)length, CURLFORM_END);
 }
 
 void HTTPRequest::add_header (const char * header){

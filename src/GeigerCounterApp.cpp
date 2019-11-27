@@ -5,6 +5,7 @@
 #include "GeigerCounterHTTPServer.h"
 #include "GeigerCounterMYSQL.h"
 #include "GeigerCounterText.h"
+#include "GeigerCounterUradClient.h"
 #include "functions.h"
 #include "log.h"
 #include <iostream>
@@ -20,10 +21,10 @@ GeigerCounterApplication::~GeigerCounterApplication (){
 	//unload all extensions
 	Logger::close();
 	counter.disconnect();
-	if (this->Extensions.size() > 3){
+	/*if (this->Extensions.size() > 3){
 		cout << "ERROR > 3";
 		cout.flush();
-	}
+	}*/
 	for (std::vector<GeigerCounterExtension*>::iterator it = this->Extensions.begin(); it != this->Extensions.end(); it++){
 		delete (*it);
 	}
@@ -63,7 +64,9 @@ void GeigerCounterApplication::packet_received (const USBGeigerCounterPacket & p
 				data.start_time = previous_sampling_time;
 				data.end_time = next_sampling_time;
 				data.last_packet = last_packet;
-
+				data.cpm = 	(float)data.counts / (float)(data.end_time - data.start_time) * 60; //counts per min.
+				data.radiation = counter.cpm2rad(data.cpm, calculate_tube_voltage((int)data.last_packet.adc_value, (int)data.last_packet.adc_calibration));
+				
 				for (std::vector<GeigerCounterExtension*>::iterator it = this->Extensions.begin(); it != this->Extensions.end(); it++){
 					LOG_DEBUG ("Saving to " << (*it)->get_name());
 					(*it)->on_interval(data);
@@ -84,6 +87,49 @@ unsigned int GeigerCounterApplication::get_interval_counts (){
 
 unsigned int GeigerCounterApplication::get_total_counts (){
 	return last_packet.counter;
+}
+
+void GeigerCounterApplication::change_setting(const char * name, const char * value) {
+	ifstream settings;
+	string line;
+	string raw_line;
+	ostringstream new_data;
+	settings.open(config_file.c_str());
+	bool value_changed = false;
+	if (!settings.fail()) {
+		while (getline(settings, raw_line)) {
+			bool key_found = false;
+			line.assign(raw_line);
+			trim(line); //remove spaces
+			istringstream is_line(line);
+			if (line.length() > 0) {
+				if (line[0] != '#' && line[0] != '/') {
+					string key;
+					if (getline(is_line, key, '=')) {
+						if (key.compare(name) == 0) {
+							new_data << key << "=" << value << endl;
+							key_found = true;
+							value_changed = true;
+						}
+					}
+				}
+			}
+			if (!key_found) new_data << raw_line << endl;
+		}
+		if (!value_changed) new_data << name << "=" << value;
+
+		settings.close();
+
+		//write changed data to settings file
+		ofstream new_settings;
+
+		new_settings.open(config_file.c_str(), std::ofstream::out | std::ofstream::trunc);
+		if (!new_settings.fail()) {
+			new_settings << new_data.str();
+			new_settings.close();
+		}
+
+	}
 }
 
 //this function opens the file and reads all the settings
@@ -109,6 +155,8 @@ void GeigerCounterApplication::load_settings(const char * file){
 							add_extension(new HTTPServerExtension(this));
 						}else if (line.compare("[text]")==0){
 							add_extension(new TextFileExtension(this));
+						}else if (line.compare("[urad_monitor_client]") == 0) {
+							add_extension(new UradClient(this));
 						}
 					}else{
 						string key;

@@ -13,6 +13,8 @@
 using namespace std;
 using namespace tinyxml2;
 
+//https://github.com/radhoo/uradmonitor_kit1/blob/master/code/uRADMonitor.cpp
+//case GEIGER_TUBE_SBM20M:	return 0.013333; // CPM 9
 
 HTTPClient::HTTPClient(GeigerCounterApplication * app):GeigerCounterExtension(app), name("HTTPClient"){
 	http_upload_enabled=false;
@@ -85,7 +87,7 @@ void HTTPClient::read_setting (const std::string & key, const std::string & valu
 	}else if (key.compare("http_public_access_port")==0){
 		public_port = (int) strtol(value.c_str(), NULL, 10);
 	}else if (key.compare("http_compress") == 0) {
-		compress = ((int)strtol(value.c_str(), NULL, 10)) > 0;
+		compress_on = ((int)strtol(value.c_str(), NULL, 10)) > 0;
 	}
 }
 
@@ -139,6 +141,7 @@ void HTTPClient::upload(){
 						"<start format=\"TS\">" << packet.start_time << "</start>" << //start and end time
 						"<end format=\"TS\">" << packet.end_time << "</end>" <<
 						"<value unit=\"counts\">" << packet.counts << "</value>" << //number of counts
+						"<rad unit=\"usvh\">" << packet.radiation << "</rad>" <<
 					"</sample>";
 			count++;
 		}
@@ -158,6 +161,8 @@ void HTTPClient::upload(){
 						"<threshold>" << packet.last_packet.threshold << "</threshold>" << 
 						"<tube_voltage>" << calculate_tube_voltage ((int)packet.last_packet.adc_value, (int)packet.last_packet.adc_calibration) << "</tube_voltage>" << 
 						"<adc cal=\"" << packet.last_packet.adc_calibration << "\">" << packet.last_packet.adc_value << "</adc>" <<
+						"<cpm>" << packet.cpm << "</cpm>" << 
+						"<rad>" << packet.radiation << "</rad>" << 
 					"</status>" <<
 					"<upload_interval>" << interval << "</upload_interval>" <<
 					"<sample_interval>" << this->app->get_sampling_interval() << "</sample_interval>";
@@ -183,38 +188,21 @@ void HTTPClient::upload(){
 			request.set_https_no_host_verification();
 			request.set_https_no_peer_verification();
 
-			if (compress) {
-				request.set_http_header("Content-Encoding: gzip");
-				z_stream strm;
+			if (compress_on) {
+				//request.set_http_header("Content-Encoding: gzip");
+
+				unsigned long sourceLen = post_data.length();
+				unsigned long destlen = compressBound(sourceLen);
+				zlib_out = new unsigned char[destlen];
 				
-				/* allocate deflate state */
-				strm.zalloc = Z_NULL;
-				strm.zfree = Z_NULL;
-				strm.opaque = Z_NULL;
-
-				if (deflateInit(&strm, Z_DEFAULT_COMPRESSION) == Z_OK) {
-					zlib_out = new unsigned char [post_data.length()];
-					strm.avail_in = post_data.length();
-					strm.next_in = (unsigned char *) post_data.c_str();
-
-					strm.avail_out = post_data.length();
-					strm.next_out = zlib_out;
-
-					if (deflate(&strm, Z_FINISH) != Z_STREAM_ERROR) {    /* no bad return value */
-						/*ofstream myFile; for debugging you can write the gz data to a file...
-						myFile.open("/dev/shm/zlib_data.bin", ios::out | ios::binary);
-						myFile.write((const char *) zlib_out, post_data.length() - strm.avail_out);
-						myFile.close();*/
-						request.add_form_parameter("data", zlib_out, post_data.length() - strm.avail_out);
-					} else {
-						LOG_ERROR("Failed compress http form data, turn of compression!");
-					}
-
-				}else{
-					zlib_init_failed = true;
-					LOG_ERROR("Failed to init zlib, turn of compression!");
+				if (compress(zlib_out, &destlen, (unsigned char *) post_data.c_str(), sourceLen)==Z_OK) {
+					request.add_form_parameter("data", zlib_out, destlen);
+					request.add_form_parameter("data_type", "gzip");
 				}
-				deflateEnd(&strm);
+				else {
+					zlib_init_failed = true;
+					LOG_ERROR("Failed compress http form data, turn of compression!");
+				}
 			}
 			else
 			{
@@ -247,7 +235,7 @@ void HTTPClient::upload(){
 						LOG_ERROR ("Invalid XML returned:\n" << request.response_data());
 					}
 				}else{//upload error
-					LOG_ERROR ("Upload error HTTP respons:\n" << request.http_response_code() << "data: " << request.response_data());
+					LOG_ERROR ("Upload error HTTP respons:\n" << request.http_response_code() << " data: " << request.response_data());
 					if (request.http_response_code()==0) LOG_ERROR("Please check your internet connection!");
 				}
 			}else{//curl error

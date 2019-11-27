@@ -46,6 +46,17 @@ std::ofstream& Logger::LogStart(TLogLevel level){
 	return logger_os;
 }
 
+std::string Logger::GetTime() {
+	std::string res;
+
+	char buffer[64];
+	time_t thetime = time(0);
+	tm * ptm = std::localtime(&thetime);
+	strftime(buffer, sizeof(buffer), "%d.%m.%Y %H:%M:%S", ptm);// Format: 15.06.2009 20:20:00 
+	res.append(buffer);
+	return res;
+}
+
 std::ofstream& Logger::GetStream(){
 	return logger_os;
 }

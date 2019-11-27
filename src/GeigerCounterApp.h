@@ -10,6 +10,8 @@ typedef struct {
 	int counts;
 	time_t start_time;
 	time_t end_time;
+	float radiation; //radiation level in µS/h
+	int cpm; //counts per min.
 	USBGeigerCounterPacket last_packet;
 }GeigerCounterIntervalData;
 
@@ -56,6 +58,7 @@ public:
 
 	void packet_received (const USBGeigerCounterPacket & packet);
 	void load_settings(const char * file);
+	void change_setting(const char * name, const char * value); //edits config file to change a value
 	void add_extension (GeigerCounterExtension * ext);
 	GeigerCounterExtension * get_extension(int index);
 	int get_extension_count();

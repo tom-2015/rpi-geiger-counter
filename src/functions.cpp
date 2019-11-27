@@ -10,6 +10,7 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <string.h>
 
 using namespace std;
 
@@ -116,4 +117,42 @@ string get_file_extension(string const & path){
 	}
 
 	return extension;
+}
+
+unsigned int MIN(unsigned int a, unsigned int b) {
+	if (a < b) return a;
+	else return b;
+}
+
+/**
+ * jsonKeyFind
+ * finds a key and copies its value to the value output pointer
+ */
+bool jsonKeyFind(char *response, const char *key, char *value, unsigned int size) {
+	char *s1 = strstr(response, key);
+	unsigned int len = strlen(key);
+	if (s1 && len) {
+		char *s2 = strstr(s1 + len + 3, "\"");
+		if (s2) {
+			strncpy(value, s1 + len + 3, MIN(s2 - s1 - len - 3, size));
+			return true;
+		}
+	}
+	return false;
+}
+
+unsigned int hex2int(char *hex) {
+	unsigned int val = 0;
+
+	while (*hex) {
+		// get current character then increment
+		unsigned char byte = *hex++;
+		// transform hex character to the 4bit equivalent number, using the ascii table indexes
+		if (byte >= '0' && byte <= '9') byte = byte - '0';
+		else if (byte >= 'a' && byte <= 'f') byte = byte - 'a' + 10;
+		else if (byte >= 'A' && byte <= 'F') byte = byte - 'A' + 10;
+		// shift 4 to make space for new digit, and add the 4 bits of the new digit
+		val = (val << 4) | (byte & 0xF);
+	}
+	return val;
 }

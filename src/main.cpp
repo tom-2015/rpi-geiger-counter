@@ -285,7 +285,7 @@ int main(int argc, char **argv){
 	
 	app.set_sampling_interval(SAMPLING_INTERVAL_TIME);
 	app.load_settings(config_file.c_str());
-	
+
 	LOG_DEBUG ("Connecting to USB Device...");
 	
 	cout << "Hit any key to exit this program." << endl;

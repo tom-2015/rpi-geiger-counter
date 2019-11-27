@@ -12,9 +12,14 @@ Installation:
    and turn the power on.
 
 2. Install some required libs and programs:
+   For running the binary:
    sudo apt-get update
    sudo apt-get install curl libcurl4-openssl-dev libmysqlclient-dev libudev-dev make libusb-dev
-
+   For compiling you need:
+   sudo apt-get install libcurl4-openssl-dev default-libmysqlclient-dev libudev-dev libusb-dev
+   
+   on some new Raspbian version libmysqlclient-dev is named default-libmysqlclient-dev
+   
 3. Now you can clone and compile the code:
    git clone https://github.com/tom-2015/rpi-geiger-counter.git
    cd rpi-geiger-counter
@@ -38,6 +43,14 @@ Installation:
    step 4 after http_counter_id=<your id here> and http_counter_password=<your password>
    Also enable the http_client: http_upload_enabled=1
 
+   If you want the device on https://www.uradmonitor.com/:
+   Create an account and enter the urad details below [urad_monitor_client]
+   urad_client_enabled = 1
+   urad_user_id=
+   urad_user_key=
+   The urad_user_id and urad_user_key can be obtained from the uradmonitor site, first create account.
+   Then login and got to dashboard, API there it shows user-id and user-key.
+   
 7. Exit nano (with CTR+X) and type Y, hit enter to save the data
 
 8. Now you can make the program executable and run it:

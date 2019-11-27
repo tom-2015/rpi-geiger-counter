@@ -2,7 +2,7 @@ APPNAME=geiger.elf
 INCL=-I/usr/include -I/usr/lib/arm-linux-gnueabihf
 LINK=-L/usr/lib -L/usr/local/lib -ludev -lpthread -lmysqlclient -lcurl -lz
 CXX=g++ 
-CXXFLAGS = -pthread -DAPP_VERSION="3.0" $(INCL)
+CXXFLAGS = -pthread -DAPP_VERSION="4.0" $(INCL)
 
 #debugging or not (make DEBUG=1)
 ifeq (1,$(DEBUG))

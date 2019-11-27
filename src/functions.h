@@ -17,4 +17,11 @@ int calculate_tube_voltage (int adc_value, int adc_calibration); //returns the v
 std::string str_replace(std::string src, std::string const& target, std::string const& repl);
 std::string get_file_extension(std::string const & path);
 
+/**
+ * jsonKeyFind
+ * finds a key and copies its value to the value output pointer
+ */
+bool jsonKeyFind(char *response, const char *key, char *value, unsigned int size);
+unsigned int hex2int(char *hex);
+
 #endif

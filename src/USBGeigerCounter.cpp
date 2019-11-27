@@ -150,3 +150,13 @@ void USBGeigerCounter::set_vid(int val){
 void USBGeigerCounter::set_pid(int val){
 	pid = val;
 }
+
+
+float USBGeigerCounter::cpm2rad(float cpm, float volt){
+	float x = 0.5 * (volt - (float)RAD_WORKING_VOLTAGE) / 10000.0;
+	
+	float cps_mrh = (float)RAD_SENSETIVITY * (x + 1.0) / (1.0-x); //adjusted counts per second per millirontgen per hour (adjusted to the current tube voltage
+	float usvh_pcm = 1.0 / (cps_mrh / 10.0 * 60.0); // microsievert per hour per count per minute
+	
+	return usvh_pcm * cpm;
+}

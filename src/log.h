@@ -32,7 +32,7 @@ typedef enum  {
 								Logger::LogStart(logDEBUG) << message << endl; \
 								Logger::Flush(); \
                                 pthread_mutex_unlock(&logger_mutex);\
-								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << message << endl; } \
+								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << Logger::GetTime() << " " << message << endl; } \
 							}
 
 #define LOG_ERROR(message) if (logERROR & Logger::ReportingLevel()){ \
@@ -40,7 +40,7 @@ typedef enum  {
 								Logger::LogStart(logERROR) << message << endl; \
 								Logger::Flush(); \
                                 pthread_mutex_unlock(&logger_mutex);\
-								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << message << endl; } \
+								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << Logger::GetTime() << " " << message << endl; } \
 							}
 
 #define LOG_WARNING(message) if (logWARNING & Logger::ReportingLevel()){ \
@@ -48,7 +48,7 @@ typedef enum  {
 								Logger::LogStart(logWARNING) << message << endl; \
 								Logger::Flush(); \
                                 pthread_mutex_unlock(&logger_mutex);\
-								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << message << endl; } \
+								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << Logger::GetTime() << " " << message << endl; } \
 							}
 
 #define LOG_INFO(message) if (logINFO & Logger::ReportingLevel()){ \
@@ -56,7 +56,7 @@ typedef enum  {
 								Logger::LogStart(logINFO) << message << endl; \
 								Logger::Flush(); \
                                 pthread_mutex_unlock(&logger_mutex);\
-								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << message << endl; } \
+								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << Logger::GetTime() << " " << message << endl; } \
 							}
 
 #define LOG(level, message) if (level & Logger::ReportingLevel()){ \
@@ -64,7 +64,7 @@ typedef enum  {
 								Logger::LogStart(level) << message << endl; \
 								Logger::Flush(); \
                                 pthread_mutex_unlock(&logger_mutex);\
-								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << message << endl; } \
+								if (logSTDOUT & Logger::ReportingLevel()){ std::cout << Logger::GetTime() << " " << message << endl; } \
 							}
 
 class Logger{
@@ -81,6 +81,7 @@ class Logger{
 		static std::string ToString (TLogLevel level);   //converts the reporting level to a string (the text is used in the log file)
 		static void set_max_file_size(unsigned long size);
 		static unsigned long get_max_file_size();
+		static std::string GetTime();
 };
 
 #endif

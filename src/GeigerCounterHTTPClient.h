@@ -17,7 +17,7 @@ class HTTPClient: public GeigerCounterExtension {
 	int last_http_response_code;
 
 
-	bool compress;
+	bool compress_on;
 	bool http_upload_enabled;
 	bool enabled;
 	bool keep_uploading;
