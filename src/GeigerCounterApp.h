@@ -41,6 +41,7 @@ private:
 	bool use_remote_watchdog;
 	std::string log_file; //location of the log file
 	std::string config_file; //location of the config file
+	std::string wdt_file; //file to change regular for wdt
 	std::vector<GeigerCounterExtension*> Extensions; //all extensions loaded
 
 	time_t next_sampling_time, previous_sampling_time;
@@ -48,7 +49,7 @@ private:
 	int interval_counts;
 	USBGeigerCounterPacket last_packet; //last_packet is last received respons from geiger counter and http_packet is the same but only used by http server for sending status
 	bool firstpacket; //true if this is the first packet we received after a reboot of the program
-
+	
 
 public:
 	USBGeigerCounter counter; //object to the geiger counter interface class

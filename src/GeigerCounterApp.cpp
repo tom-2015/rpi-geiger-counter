@@ -54,6 +54,12 @@ void GeigerCounterApplication::packet_received (const USBGeigerCounterPacket & p
 		for (std::vector<GeigerCounterExtension*>::iterator it = this->Extensions.begin(); it != this->Extensions.end(); it++){
 			(*it)->on_packet_received(packet);
 		}
+		
+		if (wdt_file.length()>0){
+			ofstream wdt_ofs(wdt_file.c_str(), std::ofstream::out |  std::ofstream::trunc);
+			wdt_ofs << last_packet.counter << endl;
+			wdt_ofs.close();
+		}
 
 		time_t current_time = time(0);
 		if (current_time >= next_sampling_time){ //check if we reached the sampling time
@@ -183,6 +189,8 @@ void GeigerCounterApplication::load_settings(const char * file){
 									this->counter.set_pid((int)strtol(value.c_str(), NULL, 10));
 								}else if (key.compare("debug")==0){ //enable debug output
 									Logger::setReportingLevel ((TLogLevel) strtol(value.c_str(), NULL, 10));
+								}else if (key.compare("watchdog")==0){
+									this->wdt_file=value;
 								}
 								for (std::vector<GeigerCounterExtension*>::iterator it = this->Extensions.begin(); it != this->Extensions.end(); it++) (*it)->read_setting(key, value); //pass the parameter to the extendsions, they process adjust their settings if needed
 							}
